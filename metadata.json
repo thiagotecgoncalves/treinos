@@ -1,0 +1,6 @@
+{
+  "name": "Treino Full Body 3x",
+  "description": "Painel mobile para acompanhamento de treinos Full Body 3x com registro de cargas, séries, RIR e cronômetro de descanso.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
