@@ -1,4 +1,5 @@
-import { Minus, Plus, Timer, X } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface RestTimerBarProps {
   secondsLeft: number;
@@ -21,39 +22,66 @@ export function RestTimerBar({
   onAdjust,
   onDismiss,
 }: RestTimerBarProps) {
-  const progress = totalSeconds > 0 ? Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100)) : 0;
+  const progress =
+    totalSeconds > 0 ? Math.max(0, Math.min(1, secondsLeft / totalSeconds)) : 0;
   const isFinished = secondsLeft === 0;
+  const ringRadius = 15;
+  const circumference = 2 * Math.PI * ringRadius;
+  const strokeOffset = circumference * (1 - (isFinished ? 1 : progress));
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 18, scale: 0.98 }}
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
       role="status"
       aria-live="polite"
-      className="fixed bottom-[70px] left-3 right-3 z-30 md:left-auto md:right-6 md:bottom-6 md:w-96 rounded-2xl bg-[#141619] text-white dark:bg-zinc-900 border border-stone-800 dark:border-zinc-700 shadow-lg overflow-hidden"
+      className="fixed bottom-[70px] left-3 right-3 z-30 md:left-auto md:right-6 md:bottom-6 md:w-96 rounded-2xl bg-[#141619]/95 backdrop-blur-md text-white dark:bg-zinc-900/95 border border-stone-800 dark:border-zinc-700 shadow-xl overflow-hidden"
     >
-      <div className="h-1 w-full bg-white/10">
-        <div
-          className={`h-full transition-[width] duration-300 ease-linear ${
-            isFinished ? 'bg-emerald-500' : 'bg-[#EA580C]'
-          }`}
-          style={{ width: `${isFinished ? 100 : progress}%` }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2 px-3 py-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-              isFinished ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#EA580C]/20 text-[#FB923C]'
-            }`}
-          >
-            <Timer className="w-4 h-4" />
+      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
+            <svg width="40" height="40" className="-rotate-90">
+              <circle
+                cx="20"
+                cy="20"
+                r={ringRadius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="text-white/10"
+              />
+              <circle
+                cx="20"
+                cy="20"
+                r={ringRadius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeOffset}
+                className={`transition-[stroke-dashoffset] duration-300 ease-linear ${
+                  isFinished ? 'text-emerald-400' : 'text-[#EA580C]'
+                }`}
+              />
+            </svg>
+            <span className="absolute text-[10px] font-mono-tabular font-semibold text-white">
+              {isFinished ? '0s' : `${secondsLeft}`}
+            </span>
           </div>
+
           <div className="min-w-0">
             <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold font-mono-tabular leading-none">
                 {isFinished ? 'Pronto' : formatTimer(secondsLeft)}
               </span>
-              <span className="text-[11px] text-stone-400 whitespace-nowrap">
+              <span
+                className={`text-[11px] whitespace-nowrap ${
+                  isFinished ? 'text-emerald-400 font-medium' : 'text-stone-400'
+                }`}
+              >
                 {isFinished ? 'Descanso concluído' : 'Descanso'}
               </span>
             </div>
@@ -90,6 +118,6 @@ export function RestTimerBar({
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

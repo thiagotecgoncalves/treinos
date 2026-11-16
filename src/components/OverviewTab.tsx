@@ -75,9 +75,18 @@ export function OverviewTab({
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const todayIdx = getTodayScheduleIndex();
+  const todaySchedule = spreadsheet.schedule[todayIdx];
+
   const totalExercises = exercises.length;
   const completedTotal = exercises.filter((e) => e.completed).length;
   const totalPercent = totalExercises > 0 ? Math.round((completedTotal / totalExercises) * 100) : 0;
+
+  const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
+  const completedSets = exercises.reduce(
+    (acc, ex) => acc + ex.completedSets.filter(Boolean).length,
+    0
+  );
 
   const workoutStats = (['A', 'B', 'C'] as WorkoutId[]).map((id) => {
     const list = exercises.filter((e) => e.workoutId === id);
@@ -89,8 +98,15 @@ export function OverviewTab({
     return { id, label: `Treino ${id}`, done, total, pct, status };
   });
 
+  const completedSessionsCount = workoutStats.filter(
+    (w) => w.total > 0 && w.done === w.total
+  ).length;
+
   const nextPendingWorkout =
-    workoutStats.find((w) => w.done < w.total)?.id ?? 'A';
+    (todaySchedule?.workoutId &&
+    workoutStats.find((w) => w.id === todaySchedule.workoutId && w.done < w.total)
+      ? todaySchedule.workoutId
+      : workoutStats.find((w) => w.done < w.total)?.id) ?? 'A';
 
   const selectedDay = spreadsheet.schedule[selectedDayIdx] ?? spreadsheet.schedule[0];
 
@@ -107,43 +123,57 @@ export function OverviewTab({
     <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0">
       {/* Left Column on Desktop / Top Summary on Mobile */}
       <div className="space-y-6 lg:col-span-7">
-        {/* Weekly Total Hero Card */}
-        <section className="rounded-2xl bg-white dark:bg-[#171A1F] border border-stone-200/90 dark:border-zinc-800 p-5">
+        {/* Weekly Total Hero Focal Card */}
+        <section className="rounded-2xl bg-[#141619] text-white dark:bg-[#171A1F] border border-stone-800 dark:border-zinc-800 p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-medium text-stone-500 dark:text-zinc-400">
-                Progresso Total da Semana
-              </p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-3xl font-bold font-display tracking-tight tabular-nums text-stone-900 dark:text-zinc-100">
-                  {completedTotal} de {totalExercises}
-                </span>
-                <span className="text-sm text-stone-500 dark:text-zinc-400">
-                  exercícios
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-400">
+                <span>Hoje: {todaySchedule?.day ?? 'Semana'}</span>
+                <span aria-hidden="true">·</span>
+                <span className="text-[#FB923C] font-medium">
+                  {todaySchedule?.activity ?? `Treino ${nextPendingWorkout}`}
                 </span>
               </div>
-              <p className="mt-1.5 text-xs text-stone-600 dark:text-zinc-400">
-                {completedTotal === totalExercises && totalExercises > 0
-                  ? 'Semana concluída. Excelente consistência.'
-                  : `Próxima sessão sugerida: Treino ${nextPendingWorkout}`}
-              </p>
+
+              <div className="mt-1.5 flex items-baseline gap-2.5">
+                <span className="text-4xl font-bold font-display tracking-tight tabular-nums text-white">
+                  {completedTotal} de {totalExercises}
+                </span>
+                <span className="text-sm text-stone-400">exercícios</span>
+              </div>
+
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono-tabular text-stone-300">
+                <span>
+                  {completedSets}/{totalSets} séries
+                </span>
+                <span aria-hidden="true" className="text-stone-600">
+                  ·
+                </span>
+                <span>{completedSessionsCount}/3 treinos</span>
+              </div>
             </div>
 
             <ProgressRing
               percentage={totalPercent}
-              size={72}
+              size={76}
               strokeWidth={6}
-              accentClass={totalPercent === 100 ? 'text-emerald-600' : 'text-[#EA580C]'}
+              accentClass={totalPercent === 100 ? 'text-emerald-400' : 'text-[#EA580C]'}
+              trackClass="text-white/10"
+              labelClass="text-white"
             />
           </div>
 
-          <div className="mt-4 pt-4 border-t border-stone-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+          <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => onNavigateTab(nextPendingWorkout)}
-              className="flex-1 min-h-[44px] px-4 rounded-xl bg-[#141619] text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+              className="flex-1 min-h-[46px] px-4 rounded-xl bg-[#EA580C] text-white text-sm font-semibold hover:bg-[#DC4E07] active:scale-[0.99] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
             >
-              <span>Abrir Treino {nextPendingWorkout}</span>
+              <span>
+                {completedTotal === totalExercises && totalExercises > 0
+                  ? `Revisar Treino ${nextPendingWorkout}`
+                  : `Iniciar Treino ${nextPendingWorkout}`}
+              </span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

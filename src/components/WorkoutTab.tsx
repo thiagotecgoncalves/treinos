@@ -1,4 +1,5 @@
 import { ArrowUpFromLine, CheckCheck, Plus, RotateCcw, Timer } from 'lucide-react';
+import { useState } from 'react';
 import { WORKOUT_SESSIONS } from '../data/defaultWorkouts';
 import { Exercise, WorkoutId } from '../types/workout';
 import { ExerciseCard } from './ExerciseCard';
@@ -36,11 +37,23 @@ export function WorkoutTab({
   onResetWorkout,
   onCompleteAll,
 }: WorkoutTabProps) {
+  const [filterMode, setFilterMode] = useState<'all' | 'pending'>('all');
+
   const session = WORKOUT_SESSIONS[workoutId];
   const completedCount = exercises.filter((e) => e.completed).length;
   const totalCount = exercises.length;
+  const pendingCount = totalCount - completedCount;
   const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = totalCount > 0 && completedCount === totalCount;
+
+  const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
+  const doneSets = exercises.reduce(
+    (acc, ex) => acc + ex.completedSets.filter(Boolean).length,
+    0
+  );
+
+  const visibleExercises =
+    filterMode === 'pending' ? exercises.filter((e) => !e.completed) : exercises;
 
   return (
     <div className="space-y-4">
@@ -48,11 +61,15 @@ export function WorkoutTab({
       <section className="rounded-2xl bg-white dark:bg-[#171A1F] border border-stone-200/90 dark:border-zinc-800 p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-zinc-400">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-stone-500 dark:text-zinc-400">
               <span>{session.dayLabel}</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono-tabular">
-                {completedCount} de {totalCount} exercícios ({percent}%)
+                {completedCount}/{totalCount} exercícios ({percent}%)
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono-tabular">
+                {doneSets}/{totalSets} séries
               </span>
             </div>
             <h2 className="mt-1 text-2xl font-bold font-display tracking-tight text-stone-900 dark:text-zinc-100">
@@ -88,18 +105,43 @@ export function WorkoutTab({
           />
         </div>
 
-        {/* Quick Session Actions */}
+        {/* Filter & Session Actions */}
         <div className="mt-3.5 pt-3.5 border-t border-stone-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => onResetWorkout(workoutId)}
-            className="min-h-[40px] px-3 rounded-xl text-xs font-medium text-stone-600 hover:bg-stone-100 dark:text-zinc-400 dark:hover:bg-zinc-800 inline-flex items-center gap-1.5 whitespace-nowrap"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Limpar Sessão</span>
-          </button>
+          <div className="inline-flex rounded-xl bg-stone-100 dark:bg-zinc-900 p-1">
+            <button
+              type="button"
+              onClick={() => setFilterMode('all')}
+              className={`min-h-[36px] px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                filterMode === 'all'
+                  ? 'bg-white text-stone-900 shadow-xs dark:bg-zinc-800 dark:text-zinc-100'
+                  : 'text-stone-600 dark:text-zinc-400'
+              }`}
+            >
+              Todos ({totalCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterMode('pending')}
+              className={`min-h-[36px] px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                filterMode === 'pending'
+                  ? 'bg-white text-stone-900 shadow-xs dark:bg-zinc-800 dark:text-zinc-100'
+                  : 'text-stone-600 dark:text-zinc-400'
+              }`}
+            >
+              Pendentes ({pendingCount})
+            </button>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onResetWorkout(workoutId)}
+              className="min-h-[40px] px-3 rounded-xl text-xs font-medium text-stone-600 hover:bg-stone-100 dark:text-zinc-400 dark:hover:bg-zinc-800 inline-flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Limpar</span>
+            </button>
+
             {canSyncToSheet && onRequestPushToSheet && (
               <button
                 type="button"
@@ -107,7 +149,7 @@ export function WorkoutTab({
                 className="min-h-[40px] px-3 rounded-xl border border-stone-200 dark:border-zinc-700 text-xs font-medium text-stone-700 dark:text-zinc-200 hover:bg-stone-50 dark:hover:bg-zinc-800 inline-flex items-center gap-1.5 whitespace-nowrap"
               >
                 <ArrowUpFromLine className="w-3.5 h-3.5 text-[#EA580C]" />
-                <span>Salvar na Planilha</span>
+                <span>Salvar Planilha</span>
               </button>
             )}
 
@@ -122,7 +164,7 @@ export function WorkoutTab({
               }`}
             >
               <CheckCheck className="w-4 h-4" />
-              <span>{allDone ? 'Treino Concluído' : 'Marcar Todos'}</span>
+              <span>{allDone ? 'Concluído' : 'Marcar Todos'}</span>
             </button>
           </div>
         </div>
@@ -143,9 +185,22 @@ export function WorkoutTab({
             <span>Adicionar Exercício</span>
           </button>
         </div>
+      ) : visibleExercises.length === 0 ? (
+        <div className="rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 p-6 text-center space-y-3">
+          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+            Todos os exercícios do {session.title} foram concluídos.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFilterMode('all')}
+            className="min-h-[40px] px-4 rounded-xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300"
+          >
+            Mostrar todos os {totalCount} exercícios
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
-          {exercises.map((exercise) => (
+          {visibleExercises.map((exercise) => (
             <ExerciseCard
               key={exercise.id}
               exercise={exercise}

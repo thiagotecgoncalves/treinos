@@ -1,4 +1,5 @@
 import { Check, Minus, Pencil, Plus, Timer } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Exercise } from '../types/workout';
 
 interface ExerciseCardProps {
@@ -45,7 +46,9 @@ export function ExerciseCard({
   const completedSetsCount = exercise.completedSets.filter(Boolean).length;
 
   return (
-    <article
+    <motion.article
+      layout="position"
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
       className={`rounded-2xl border transition-colors duration-150 p-4 ${
         exercise.completed
           ? 'bg-emerald-50/50 border-emerald-200/90 dark:bg-emerald-950/20 dark:border-emerald-900/60'
@@ -113,7 +116,7 @@ export function ExerciseCard({
                 ? `Desmarcar ${exercise.name} como concluído`
                 : `Marcar ${exercise.name} como concluído`
             }
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl active:scale-95 transition-transform"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl active:scale-90 transition-transform"
           >
             <span
               className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-colors ${
@@ -221,6 +224,6 @@ export function ExerciseCard({
           </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

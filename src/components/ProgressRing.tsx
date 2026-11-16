@@ -3,6 +3,8 @@ interface ProgressRingProps {
   size?: number;
   strokeWidth?: number;
   accentClass?: string;
+  trackClass?: string;
+  labelClass?: string;
 }
 
 export function ProgressRing({
@@ -10,6 +12,8 @@ export function ProgressRing({
   size = 64,
   strokeWidth = 6,
   accentClass = 'text-[#EA580C]',
+  trackClass = 'text-stone-200 dark:text-zinc-800',
+  labelClass = 'text-stone-900 dark:text-zinc-100',
 }: ProgressRingProps) {
   const clamped = Math.max(0, Math.min(100, percentage));
   const radius = (size - strokeWidth) / 2;
@@ -30,7 +34,7 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-stone-200 dark:text-zinc-800"
+          className={trackClass}
         />
         <circle
           cx={size / 2}
@@ -45,7 +49,7 @@ export function ProgressRing({
           className={`${accentClass} transition-[stroke-dashoffset] duration-300 ease-out`}
         />
       </svg>
-      <span className="absolute text-sm font-semibold font-mono-tabular text-stone-900 dark:text-zinc-100">
+      <span className={`absolute text-sm font-semibold font-mono-tabular ${labelClass}`}>
         {Math.round(clamped)}%
       </span>
     </div>
